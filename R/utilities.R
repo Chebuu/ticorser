@@ -13,7 +13,7 @@
 #' df <- data.frame(1, 1:10, rownames=paste0(rep("rn", 10), 1:10),
 #'     colnames=c("c1","c2"))
 #' WriteDataFrameAsTsv(df)
-WriteDataFrameAsTsv <- function(data.frame.to.save=NULL,
+writeDataFrameAsTsv <- function(data.frame.to.save=NULL,
                             file.name.path=file.path(tempdir(),tempfile()),
                             col.names=NA, row.names=TRUE)
 {
@@ -38,7 +38,7 @@ WriteDataFrameAsTsv <- function(data.frame.to.save=NULL,
 #'
 #' @examples
 #' TBW
-ReadDataFrameFromTsv <- function(file.name.path, row.names.col=1,
+readDataFrameFromTsv <- function(file.name.path, row.names.col=1,
                                 header.flag=TRUE, sep="\t", quote.char="")
 {
     if(!file.exists(file.name.path)) stop("Please provide an existing filename")

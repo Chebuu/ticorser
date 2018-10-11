@@ -20,21 +20,22 @@ SelectGenesFromHistBreaks <- function(data.counts, breakss=100,
     data.counts.mean.sorted <- sort(data.counts.mean.filtered)
     gene.names <- c()
     j<-1
-    for(i in 1:length(h$counts)) {
+    for(i in 1:length(h$counts))
+    {
         names <- names(data.counts.mean.sorted[ j : (j+h$counts[i]-1) ])
-        if(length(names) >= n.genes.per.break) {
+        if(length(names) >= n.genes.per.break)
+        {
             n.g.names <- names[c(1:n.genes.per.break)]
         } else {
             n.g.names <- names[c(1:length(names))]
         }
         gene.names <- c(gene.names, n.g.names)
-
         j <- j+h$counts[i]
     }
     return(gene.names)
 }
 
-EstimateNegativeControlGenesForRUV <- function(de.genes, n.tail.genes=2000,
+estimateNegativeControlGenesForRUV <- function(de.genes, n.tail.genes=2000,
                                             counts.dataset,
                                             n.genes.per.hist.break=1,
                                             threshold=0.05)
@@ -50,7 +51,7 @@ RUVgNormalizationFunction <- function(data.to.normalize,
                                       design.matrix,
                                       desMatColStr,
                                       estimated.gene.names,
-                                      k=1, isLog=FALSE,
+                                      ruv.k=1, isLog=FALSE,
                                       gene.names.col=NULL) {
 
     if( length( which(colnames(design.matrix) == desMatColStr)) == 0 ) {
@@ -65,7 +66,8 @@ RUVgNormalizationFunction <- function(data.to.normalize,
         genes <- data.to.normalize[,gene.names.col]
     }
     data.to.normalize <- data.to.normalize[,
-                                which(colnames(data.to.normalize) %in% rownames(design.matrix))]
+                                            which(colnames(data.to.normalize)
+                                                %in% rownames(design.matrix))]
     if(!isLog) {
         dataset.set <- EDASeq::newSeqExpressionSet(as.matrix(data.to.normalize),
                                     phenoData=data.frame(
@@ -78,45 +80,64 @@ RUVgNormalizationFunction <- function(data.to.normalize,
 
 
     ruved.set <- RUVSeq::RUVg(x=dataset.set, cIdx=estimated.gene.names,
-                              k=k, isLog=isLog)
+                              k=ruv.k, isLog=isLog)
 
 
     #return(as.data.frame(ruved.set@assayData$normalizedCounts))
     return(ruved.set)
 }
 
-NormalizeData <- function(data.to.normalize, norm.type=c("fqua", "uqua", "tmm", "ruvg"), design.matrix=NULL, design.matrix.factors.column=NULL, estimated.genes=NULL, is.log=FALSE) {
+normalizeData <- function(data.to.normalize,
+                        norm.type=c("fqua", "uqua", "tmm", "ruvg", "ruvs"),
+                        design.matrix=NULL, design.matrix.factors.column=NULL,
+                        estimated.genes=NULL, is.log=FALSE, ruv.k=1)
+{
     ## @ norm.type can be uqua, tmm, fqua or ruvg
 
     x <- data.to.normalize
 
-    if(norm.type != "fqua") {
-        if(norm.type == "ruvg") {
-            if(!(is.null(design.matrix) && is.null(estimated.genes))){ ## test
+    if(norm.type != "fqua")
+    {
+        if(norm.type == "ruvg")
+        {
+            if(!(is.null(design.matrix) && is.null(estimated.genes)))
+            { ## test
                 normalized.data <- RUVgNormalizationFunction(
                                         data.to.normalize=data.to.normalize,
                                         design.matrix=design.matrix,
                                         desMatColStr=design.matrix.factors.column,
                                         estimated.gene.names=estimated.genes,
-                                        isLog=is.log)
+                                        isLog=is.log, ruv.k=ruv.k)
             } else {
                 stop("Please select a design matrix and a list of negative",
                         " control genes for RUVg normalization")
             }
         } else {
-            require("edgeR")
-            x <- edgeR::DGEList(counts=x)
-            if(norm.type=="uqua") {
-                x <- edgeR::calcNormFactors(x, method='upperquartile')
-            }
+            if(norm.type=="ruvs"){
+                groups <- RUVSeq::makeGroups(design.matrix[[
+                                                design.matrix.factors.column]])
+                ruvedSExprData <- RUVSeq::RUVs(as.matrix(round(x)),
+                                            cIdx=estimated.genes,
+                                            scIdx=groups, k=ruv.k)
 
-            if(norm.type=="tmm") {
-                x <- edgeR::calcNormFactors(x, method='TMM')
-            }
+                normalized.data <- ruvedSExprData$normalizedCounts
+            } else {
+                # require("edgeR")
+                x <- edgeR::DGEList(counts=x)
+                if(norm.type=="uqua")
+                {
+                    x <- edgeR::calcNormFactors(x, method='upperquartile')
+                }
 
-            x <- edgeR::estimateCommonDisp(x, verbose=FALSE)
-            x <- edgeR::estimateTagwiseDisp(x)
-            normalized.data <- as.data.frame(x$pseudo.counts)
+                if(norm.type=="tmm")
+                {
+                    x <- edgeR::calcNormFactors(x, method='TMM')
+                }
+
+                x <- edgeR::estimateCommonDisp(x, verbose=FALSE)
+                x <- edgeR::estimateTagwiseDisp(x)
+                normalized.data <- as.data.frame(x$pseudo.counts)
+            }
         }
 
     } else if(norm.type == "fqua") {

@@ -398,7 +398,7 @@ countBamFilesFeatureCounts <- function(bam.files, annotation.file,
                                         save.flag=FALSE,
                                         prefix.output.file,
                                         gtf.attr.type="gene_id",
-                                        gtf.feat.typr="exon",
+                                        gtf.feat.type="exon",
                                         n.thread=8,
                                         strand.specific=0,
                                         is.paired.end=FALSE)
@@ -408,7 +408,7 @@ countBamFilesFeatureCounts <- function(bam.files, annotation.file,
     fc_SE <- Rsubread::featureCounts(files=bam.files,
                                     annot.ext=annotation.file,
                                     isGTFAnnotationFile=TRUE,
-                                    GTF.featureType=gtf.feat.typr, ## def
+                                    GTF.featureType=gtf.feat.type, ## def
                                     GTF.attrType=gtf.attr.type, ## gene_id def
                                     useMetaFeatures=TRUE, ## def
                                     allowMultiOverlap=FALSE, ## def
